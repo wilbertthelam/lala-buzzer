@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>lala</title>
+		<link rel='stylesheet' href='/stylesheets/style.css' />
+		<link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/milligram/1.2.4/milligram.min.css' />
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		<script src="/socket.io/socket.io.js"></script>
+	</head>
+	<body>
+		<h1>lala - the buzzer land</h1>
+		
+		<button id="reset">
+			Reset
+		</button>
+
+		<h4>
+			Winning ID is: 
+		</h4>
+		<p id="winningId">
+			
+		</p>
+
+		<button id="clicker">
+			Press here
+		</button>
+
+		<script>
+			var socket = io();
+
+			$("#reset").click(function() {
+				socket.emit('reset');
+			});
+
+			socket.on('resetRegistered', function () {
+				$("#clicker").show();
+			});
+
+			// on user click of the button, tell server
+			// clientId of the person who clicked it
+			$(clicker).click(function() {
+				socket.emit('clicked', { clientId: socket.id });
+			});
+
+			// if someone clicks, update the interface
+			socket.on('clickRegistered', function(data) {
+				if (data.winnerId === socket.id) {
+					$('#winningId').html("<p>You!</p>");
+				} else {
+					$('#winningId').html("<p>" + data.winnerId + "</p>");
+				}
+				$('#clicker').hide();
+			});
+		</script>
+	</body>
+</html>
