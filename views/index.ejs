@@ -14,26 +14,46 @@
 			Reset
 		</button>
 
-		<h4>
-			Winning ID is: 
-		</h4>
-		<p id="winningId">
-			
-		</p>
+		<span id="nameForm">
+			<input id="nameBox" type="text" maxlength="20" style="width: 200px;" />
+			<button id="submitName">
+				set name
+			</button>
+		</span>
 
-		<button id="clicker">
+		<div>
+			<span>in-game: </span>
+			<span id="users"></span>
+		</div>
+
+		<br />
+
+		<h5>
+			Winner is: 
+		</h5>
+		<h1 id="winningId">
+			
+		</h1>
+
+		<button id="clicker" style="width: 400px; height: 200px">
 			Press here
 		</button>
 
 		<script>
 			var socket = io();
 
+			// reset game click event
 			$("#reset").click(function() {
 				socket.emit('reset');
 			});
 
+			// on server-side reset completion
 			socket.on('resetRegistered', function () {
+				// show clicker button again
 				$("#clicker").show();
+
+				// clear out the winning id
+				$('#winningId').html("<p></p>");
 			});
 
 			// on user click of the button, tell server
@@ -47,10 +67,23 @@
 				if (data.winnerId === socket.id) {
 					$('#winningId').html("<p>You!</p>");
 				} else {
-					$('#winningId').html("<p>" + data.winnerId + "</p>");
+					$('#winningId').html("<p>" + data.winnerName + "</p>");
 				}
 				$('#clicker').hide();
 			});
+
+			// on name set
+			$("#submitName").click(function () {
+				var name = $("#nameBox").val();
+				$('#nameForm').html("Hey there, " + "<b>" + name + ".</b>");
+				socket.emit('nameSet', { clientId: socket.id, name: name });
+			});
+
+			// list people in game
+			socket.on('listOfConnected', function (data) {
+				$("#users").html("<i>" + data.names.toString() +"</i>");
+			});
+
 		</script>
 	</body>
 </html>

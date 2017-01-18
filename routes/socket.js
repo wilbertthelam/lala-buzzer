@@ -4,19 +4,56 @@ var router = express.Router();
 module.exports = function(io) {
 	var currentState = 'OPEN';
 	var winnerId = '';
+
+	var nameDict = {}
+
+	// on client connection to the socket server
 	io.on('connection', function(socket) {
 		console.log('user connected: ' + socket.id);
-		io.emit('clickRegistered', { winnerId: winnerId });
 
 		// print users in the room
 		var users = io.sockets.adapter.rooms;
 		console.log('[');
 		var userCount = 0;
+		var userNames = []
 		for (var user in users) {
 			console.log(user);
 			userCount += 1;
+			userNames.push(nameDict[user]);
 		}
+
+		io.emit('listOfConnected', {
+			names: userNames
+		});
+		
 		console.log(']');
+
+
+
+		// on default, name is the client id
+		nameDict[socket.id] = socket.id
+
+		socket.on('nameSet', function (data) {
+			nameDict[data.clientId] = data.name;
+			console.log(JSON.stringify(nameDict));
+			
+			// every time a user updates their name, update name list
+			var userNames = [];
+			for (var user in io.sockets.adapter.rooms) {
+				console.log(user);
+				console.log(nameDict[user]);
+				userNames.push(nameDict[user]);
+			}
+
+			io.emit('listOfConnected', {
+				names: userNames
+			});
+		});
+
+		// on connection, update the status of the winner if 
+		// already pre-existing session going on
+		if (currentState === 'CLOSED')
+			io.emit('clickRegistered', { winnerId: winnerId, winnerName: nameDict[winnerId] });
 
 
 		// registers when a user has clicked their button
@@ -26,7 +63,9 @@ module.exports = function(io) {
 			winnerId = data.clientId;
 			if (currentState === 'OPEN') {
 				currentState = 'CLOSED';
-				io.emit('clickRegistered', { winnerId: winnerId });
+				io.emit('clickRegistered', 
+					{ winnerId: winnerId, winnerName: nameDict[winnerId] }
+				);
 			}
 		});
 
