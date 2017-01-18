@@ -21,14 +21,12 @@ module.exports = function(io) {
 			userCount += 1;
 			userNames.push(nameDict[user]);
 		}
+		console.log(']');
 
+		// emit list of connected users on connection
 		io.emit('listOfConnected', {
 			names: userNames
 		});
-		
-		console.log(']');
-
-
 
 		// on default, name is the client id
 		nameDict[socket.id] = socket.id
@@ -76,5 +74,19 @@ module.exports = function(io) {
 			io.emit('resetRegistered');
 		});
 		
+		// on disconnect, update the connected usernames
+		socket.on('disconnect', function () {
+			// every time a user updates their name, update name list
+			var userNames = [];
+			for (var user in io.sockets.adapter.rooms) {
+				console.log(user);
+				console.log(nameDict[user]);
+				userNames.push(nameDict[user]);
+			}
+
+			io.emit('listOfConnected', {
+				names: userNames
+			});
+		});
 	});
 };
